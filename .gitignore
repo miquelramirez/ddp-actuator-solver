@@ -6,3 +6,6 @@ _build
 build_dir
 *.dblite
 *.o
+exploration/temperature_control/*.csv
+exploration/walkbot/*.csv
+exploration/walkbot/*.pdf
