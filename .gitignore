@@ -4,3 +4,5 @@ _build
 .idea
 /build/
 build_dir
+*.dblite
+*.o
