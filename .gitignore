@@ -6,6 +6,15 @@ _build
 build_dir
 *.dblite
 *.o
+
+# Data files and plots
 exploration/temperature_control/*.csv
 exploration/walkbot/*.csv
 exploration/walkbot/*.pdf
+
+# Jupyter checkpoints
+*-checkpoint.ipynb
+
+# executables
+exploration/temperature_control/temp_control
+exploration/walkbot/walkbot
