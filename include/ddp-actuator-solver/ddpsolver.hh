@@ -151,6 +151,12 @@ class DDPSolver
       }
     }
 
+    //! Configures the solvers, setting the following parameters
+    //! @param myxInit The initial state x0
+    //! @param myxDes The target state x*
+    //! @param myT Number of time steps allowed to reach x*
+    //! @param myiterMax Maximum number of iterations (backwards-forward passes)
+    //! @param mystopCrit Real-value constant for the DDP stopping criterion
     void FirstInitSolver(stateVec_t& myxInit, stateVec_t& myxDes,
         unsigned int& myT, double& mydt, unsigned int& myiterMax,
         double& mystopCrit)
@@ -173,6 +179,7 @@ class DDPSolver
       kList.resize(myT);
       KList.resize(myT);
 
+      //! values of alpha for linear search
       alphaList[0] = 1.0;
       alphaList[1] = 0.8;
       alphaList[2] = 0.6;
@@ -189,38 +196,46 @@ class DDPSolver
 
     void solveTrajectory()
     {
-      initTrajectory();
-      for (iter = 1; iter < iterMax; iter++)
-      {
-        backwardLoop();
-        forwardLoop();
-        if (changeAmount < stopCrit)
+        initTrajectory();
+        for (iter = 1; iter < iterMax; iter++)
         {
-          break;
+            backwardLoop();
+            forwardLoop();
+            // stopping criterion
+            if (changeAmount < stopCrit)
+            {
+                break;
+            }
+            tmpxPtr = xList;
+            tmpuPtr = uList;
+            xList = updatedxList;
+            updatedxList = tmpxPtr;
+            uList = updateduList;
+            updateduList = tmpuPtr;
         }
-        tmpxPtr = xList;
-        tmpuPtr = uList;
-        xList = updatedxList;
-        updatedxList = tmpxPtr;
-        uList = updateduList;
-        updateduList = tmpuPtr;
-      }
     }
 
+    //! initTrajectory()
+    //!
+    //! Generate zero-noise trajectory. Control sequence
+    //! \bar{u} is set to 0.
     void initTrajectory()
     {
-      xList[0] = xInit;
-      for (unsigned int i = 0; i < T; i++)
-      {
-        uList[i] = zeroCommand;
-        xList[i + 1] = dynamicModel->computeNextState(dt, xList[i],
-            zeroCommand);
-      }
+        xList[0] = xInit;
+        for (unsigned int i = 0; i < T; i++)
+        {
+            uList[i] = zeroCommand;
+            xList[i + 1] = dynamicModel->computeNextState(dt, xList[i],
+                zeroCommand);
+        }
     }
+
+    //! Compute linear control law
 
     void backwardLoop()
     {
       costFunction->computeFinalCostDeriv(xList[T], xDes);
+      //
       nextVx = costFunction->getlx();
       nextVxx = costFunction->getlxx();
 
@@ -239,6 +254,7 @@ class DDPSolver
           dynamicModel->computeAllModelDeriv(dt, x, u);
           costFunction->computeAllCostDeriv(x, xDes, u);
 
+          // Euqations 4a - 4e in (Tassa et al, ICRA-14)
           Qx = costFunction->getlx()
               + dynamicModel->getfx().transpose() * nextVx;
           Qu = costFunction->getlu()
@@ -252,6 +268,8 @@ class DDPSolver
           Qux = costFunction->getlux()
               + dynamicModel->getfu().transpose() * (nextVxx)
                   * dynamicModel->getfx();
+          // Q-function gradients with a Tikhonov regularization
+          // term mu
           Quu_reg = costFunction->getluu()
               + dynamicModel->getfu().transpose() * (nextVxx + muEye)
                   * dynamicModel->getfu();
@@ -284,6 +302,8 @@ class DDPSolver
 
           if (enableQPBox)
           {
+            // Build quadratic program solving the projected Newton problem
+            // See Appendix I of (Tassa et al, ICRA-14)
             nWSR = 10;
             H = Quu_reg;
             g = Qu;

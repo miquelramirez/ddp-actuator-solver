@@ -53,11 +53,17 @@ private:
 protected:
     // accessors //
 public:
+    //! d l / dx
     stateVec_t& getlx()         {return lx;}
+    //! d l / dx dx
     stateMat_t& getlxx()        {return lxx;}
+    //! d l / du
     commandVec_t& getlu()       {return lu;}
+    //! d l / du du
     commandMat_t& getluu()      {return luu;}
+    //! d l / du dx
     commandR_stateC_t& getlux() {return lux;}
+    //! d l / dx du
     stateR_commandC_t& getlxu() {return lxu;}
 };
 

@@ -42,11 +42,17 @@ protected:
   commandVec_t lowerCommandBounds;
   commandVec_t upperCommandBounds;
 
+  //! d f(x,u) / dx
   stateMat_t fx;
+  //! d f(x,u) / dx dx
   stateTens_t fxx;
+  //! d f(x,u) / du
   stateR_commandC_t fu;
+  //! d f(x,u) / du du
   stateR_commandC_commandD_t fuu;
+  //! d f(x,u) / dx du
   stateR_stateC_commandD_t fxu;
+  //! d f(x,u) / du dx
   stateR_commandC_stateD_t fux;
 public:
 
